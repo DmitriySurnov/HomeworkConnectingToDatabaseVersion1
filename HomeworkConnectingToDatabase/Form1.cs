@@ -93,11 +93,11 @@ namespace WindowsFormsApp1
         {
             switch (numberRequest)
             {
-                case 0: return @"SELECT Name AS ""Person Name"", 
-                    ClassName AS ""Class Name"" FROM `Characters`, 
-                    `CharactersClass` WHERE Characters.CharacterClassID = CharactersClass.ID;";
+                case 0: return @"SELECT Characters.Name, CharactersClass.Name 
+                                FROM `Characters`,`CharactersClass` 
+                                WHERE Characters.CharacterClassID = CharactersClass.ID;";
 
-                case 1: return @"SELECT ClassName FROM `CharactersClass`;";
+                case 1: return @"SELECT Name FROM `CharactersClass`;";
 
                 default: return "";
             }
@@ -195,7 +195,7 @@ namespace WindowsFormsApp1
         private int ReceiveIdClass(string nameClass)
         {
             string sqlCommand = $@"SELECT Id FROM `CharactersClass` 
-                                WHERE ClassName = ""{nameClass}"";";
+                                WHERE Name = ""{nameClass}"";";
             _reader = SendRequestWithResponse(sqlCommand);
             int idClass = -1;
             while (_reader.Read())
@@ -214,7 +214,7 @@ namespace WindowsFormsApp1
 
         private void AddDataTheTableCharactersClass(string nameClass)
         {
-            string sqlCommand = $@"INSERT INTO `CharactersClass` (`ClassName`) 
+            string sqlCommand = $@"INSERT INTO `CharactersClass` (`Name`) 
                                         VALUES ('{nameClass}');";
             SendingRequest(sqlCommand);
         }
@@ -233,6 +233,15 @@ namespace WindowsFormsApp1
                    "Ошибка",
                    MessageBoxButtons.OK,
                    MessageBoxIcon.Error);
+        }
+
+        private static void InformationMessages()
+        {
+            MessageBox.Show(
+                   "Новый игрок был успешно добавлен",
+                   "Оповещение",
+                   MessageBoxButtons.OK,
+                   MessageBoxIcon.Information);
         }
 
         private bool ValedateTextBoxEmpty(TextBox textBox)
@@ -259,8 +268,8 @@ namespace WindowsFormsApp1
         private void ButtonAdd_Click(object sender, EventArgs e)
         {
             SwitchEnabledButtons();
-            if (ValedateTextBoxEmpty(textBoxPlayerName) ||
-                ValedateComboBoxEmpty(comboBoxPlayerClass))
+            if (!ValedateTextBoxEmpty(textBoxPlayerName) ||
+                !ValedateComboBoxEmpty(comboBoxPlayerClass))
             {
                 SwitchEnabledButtons();
                 return;
@@ -278,6 +287,7 @@ namespace WindowsFormsApp1
                 AddDataTheTableCharacters(textBoxPlayerName.Text, idClass);
                 HideAll();
                 SwitchEnabledButton(buttonAddPlayer);
+                InformationMessages();
             }
             catch (Exception ex)
             {
