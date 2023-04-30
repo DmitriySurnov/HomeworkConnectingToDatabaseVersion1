@@ -1,7 +1,6 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Windows.Forms;
-using System.Xml.Linq;
 
 namespace WindowsFormsApp1
 {
@@ -89,16 +88,23 @@ namespace WindowsFormsApp1
             cmd.ExecuteNonQuery();
         }
 
-        private string GettingDesiredRequest(int numberRequest)
+        private string GettingDesiredRequest(int numberRequest, string value1 = "", int value2 = -1)
         {
             switch (numberRequest)
             {
                 case 0: return @"SELECT Characters.Name, CharactersClass.Name 
-                                FROM `Characters`,`CharactersClass` 
-                                WHERE Characters.CharacterClassID = CharactersClass.ID;";
+                                 FROM `Characters`,`CharactersClass` 
+                                 WHERE Characters.CharactersClassId = CharactersClass.ID;";
 
                 case 1: return @"SELECT Name FROM `CharactersClass`;";
-
+                case 2: return $@"SELECT Id FROM `CharactersClass` 
+                                  WHERE Name = ""{value1}"";";
+                case 3: return $@"INSERT INTO `CharactersClass` (`Name`) 
+                                        VALUES ('{value1}');";
+                case 4: return $@"INSERT INTO `Characters` (`Name`,`CharacterClassId`) 
+                                        VALUES ('{value1}',{value2});";
+                case 5: return $@"SELECT Name FROM `Characters` 
+                                    WHERE Name = ""{value1}""";
                 default: return "";
             }
         }
@@ -188,15 +194,14 @@ namespace WindowsFormsApp1
             ConnectToDataBase();
             if (_connection == null)
             {
+                ErrorMessages("Неудолось подключиться к базе данных");
                 throw new Exception("Неудолось подключиться к базе данных");
             }
         }
 
         private int ReceiveIdClass(string nameClass)
         {
-            string sqlCommand = $@"SELECT Id FROM `CharactersClass` 
-                                WHERE Name = ""{nameClass}"";";
-            _reader = SendRequestWithResponse(sqlCommand);
+            _reader = SendRequestWithResponse(GettingDesiredRequest(2, nameClass));
             int idClass = -1;
             while (_reader.Read())
             {
@@ -214,16 +219,12 @@ namespace WindowsFormsApp1
 
         private void AddDataTheTableCharactersClass(string nameClass)
         {
-            string sqlCommand = $@"INSERT INTO `CharactersClass` (`Name`) 
-                                        VALUES ('{nameClass}');";
-            SendingRequest(sqlCommand);
+            SendingRequest(GettingDesiredRequest(numberRequest: 3, value1: nameClass));
         }
 
         private void AddDataTheTableCharacters(string playerName, int idClass)
         {
-            string sqlCommand = $@"INSERT INTO `Characters` (`Name`,`CharacterClassId`) 
-                                        VALUES ('{playerName}',{idClass});";
-            SendingRequest(sqlCommand);
+            SendingRequest(GettingDesiredRequest(4, playerName, idClass));
         }
 
         private static void ErrorMessages(string textMessages)
@@ -265,6 +266,19 @@ namespace WindowsFormsApp1
                 return true;
         }
 
+        private bool IsUniquePlayerName(string namePlayer)
+        {
+            _reader = SendRequestWithResponse(GettingDesiredRequest(5, namePlayer));
+            while (_reader.Read())
+            {
+                ErrorMessages($"Игрок с именем {namePlayer} существует");
+                RestartDataBase();
+                return false;
+            }
+            RestartDataBase();
+            return true;
+        }
+
         private void ButtonAdd_Click(object sender, EventArgs e)
         {
             SwitchEnabledButtons();
@@ -282,12 +296,15 @@ namespace WindowsFormsApp1
             }
             try
             {
-                int idClass = ReceiveIdClass(comboBoxPlayerClass.Text);
-                RestartDataBase();
-                AddDataTheTableCharacters(textBoxPlayerName.Text, idClass);
-                HideAll();
-                SwitchEnabledButton(buttonAddPlayer);
-                InformationMessages();
+                if (IsUniquePlayerName(textBoxPlayerName.Text))
+                {
+                    int idClass = ReceiveIdClass(comboBoxPlayerClass.Text);
+                    RestartDataBase();
+                    AddDataTheTableCharacters(textBoxPlayerName.Text, idClass);
+                    HideAll();
+                    SwitchEnabledButton(buttonAddPlayer);
+                    InformationMessages();
+                }
             }
             catch (Exception ex)
             {
