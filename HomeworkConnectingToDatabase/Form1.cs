@@ -101,7 +101,7 @@ namespace WindowsFormsApp1
                                   WHERE Name = ""{value1}"";";
                 case 3: return $@"INSERT INTO `CharactersClass` (`Name`) 
                                         VALUES ('{value1}');";
-                case 4: return $@"INSERT INTO `Characters` (`Name`,`CharacterClassId`) 
+                case 4: return $@"INSERT INTO `Characters` (`Name`,`CharactersClassId`) 
                                         VALUES ('{value1}',{value2});";
                 case 5: return $@"SELECT Name FROM `Characters` 
                                     WHERE Name = ""{value1}""";
